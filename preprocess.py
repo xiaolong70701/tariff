@@ -10,7 +10,8 @@ if __name__ == "__main__":
     cpi_df = pd.read_csv(os.path.join(MACRO_DATA_DIR, "CPI_by_country.csv"))
     gdp_df = pd.read_csv(os.path.join(MACRO_DATA_DIR, "GDP_by_country.csv"))
     trade_df = pd.read_csv(os.path.join(MACRO_DATA_DIR, "trade_by_country.csv"))
-    exchange_df = pd.read_csv(os.path.join(MACRO_DATA_DIR, "exchangeRate_by_country.csv"))
+    # exchange_df = pd.read_csv(os.path.join(MACRO_DATA_DIR, "exchangeRate_by_country.csv"))
+    exchange_df = pd.read_csv(os.path.join(MACRO_DATA_DIR, "eff_exchangeRate_by_country.csv"))
     taiwan_df = pd.read_csv(os.path.join(MACRO_DATA_DIR, "Taiwan_data.csv"))
 
     # process macro data
