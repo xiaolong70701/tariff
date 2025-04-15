@@ -67,7 +67,7 @@ class DataProcessor:
 
         # Convert Exchange Rate data
         self.exchange_df = self.convert_country_column(self.exchange_df, "Country Name")
-        self.exchange_melted = self.exchange_df.melt(id_vars=["Country Name"], var_name="Year", value_name="Exchange Rate")
+        self.exchange_melted = self.exchange_df.melt(id_vars=["Country Name"], var_name="Year", value_name="Real Effective Exchange Rate")
         
         # Convert "Year" column to numeric
         for df in [self.cpi_df_melted, self.gdp_df_melted, self.trade_df_melted, self.exchange_melted]:

@@ -1,6 +1,6 @@
 import os
 import pandas as pd
-from src.analysis import compute_trade_imbalance_ratio, compute_rer, filter_valid_countries
+from src.analysis import compute_trade_imbalance_ratio, filter_valid_countries
 from src.viz import plot_rer_vs_imbalance
 from src.viz import plot_taiwan_imbalance_time_series
 
@@ -17,12 +17,12 @@ if __name__ == "__main__":
             small_states.append(country.strip())
 
     df = compute_trade_imbalance_ratio(df)
-    df = compute_rer(df)
+    # df = compute_rer(df)
     df_filtered = df[(df['Year'] >= 2013) & (df['Year'] <= 2023)]
     
     avg_df = df_filtered.groupby("Country Name").agg({
         "Trade Imbalance to GDP Ratio": "mean",
-        "RER": "mean"
+        "Real Effective Exchange Rate": "mean"
     }).reset_index()
 
     avg_df.to_csv(os.path.join(OUTPUT_DIR, "average_macro_data.csv"), encoding="utf-8-sig", index=False)

@@ -23,7 +23,7 @@ if __name__ == "__main__":
     # merge data
     final_df = processor.merge_datasets()
     taiwan_df["Country Name"] = "TW"
-    taiwan_df = taiwan_df[["Country Name", "Year", "CPI", "GDP", "Trade Imbalance", "Exchange Rate"]]
+    taiwan_df = taiwan_df[["Country Name", "Year", "CPI", "GDP", "Trade Imbalance", "Real Effective Exchange Rate"]]
     final_df = pd.concat([final_df, taiwan_df], ignore_index=True)
     # save data
     final_df.to_csv(os.path.join(OUTPUT_DIR, "macro_data_merged.csv"), encoding="utf-8-sig", index=False)

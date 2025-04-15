@@ -11,16 +11,16 @@ def get_alpha_3(country_name):
 def plot_rer_vs_imbalance(df, log_scale=True, annotate=True, show_plot=False, point_alpha=0, text_alpha=0.8, fontsize=10, save_name="Average Trade Imbalance vs Average Real Exchange Rate by Country (2013-2023)", fig_suffix="png", output_dir=None):
     df["Country Code"] = df["Country Name"].apply(get_alpha_3)
     plt.figure(figsize=(12, 8))
-    plt.scatter(df["Trade Imbalance to GDP Ratio"], df["RER"], alpha=point_alpha)
+    plt.scatter(df["Trade Imbalance to GDP Ratio"], df["Real Effective Exchange Rate"], alpha=point_alpha)
     
     if annotate:
         for _, row in df.iterrows():
-            plt.text(row["Trade Imbalance to GDP Ratio"], row["RER"], row["Country Code"],
+            plt.text(row["Trade Imbalance to GDP Ratio"], row["Real Effective Exchange Rate"], row["Country Code"],
                      fontsize=fontsize, alpha=text_alpha)
 
     plt.xlabel("Average Trade Imbalance / GDP (2013–2023)")
-    plt.ylabel("Average RER (2013–2023)")
-    plt.title("Trade Imbalance vs Real Exchange Rate")
+    plt.ylabel("Average Real Effective Exchange Rate (2013–2023)")
+    plt.title("Trade Imbalance vs Real Effective Exchange Rate")
     plt.grid(True)
     plt.tight_layout()
     if log_scale:
