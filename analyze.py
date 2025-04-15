@@ -28,5 +28,9 @@ if __name__ == "__main__":
     avg_df.to_csv(os.path.join(OUTPUT_DIR, "average_macro_data.csv"), encoding="utf-8-sig", index=False)
 
     filtered_df = filter_valid_countries(avg_df, small_states)
-    plot_rer_vs_imbalance(filtered_df, annotate=True, output_dir=OUTPUT_DIR, fig_suffix="pdf")
-    plot_taiwan_imbalance_time_series(df_filtered, output_dir=OUTPUT_DIR, show_plot=False, fig_suffix="pdf")
+
+    # plot
+    reer_vs_imbalance_name = "Real_Effective_Exchange_Rate_vs_Trade_Imbalance_to_GDP_Ratio_Global"
+    taiwan_imbalance_ts_name = "Real_Effective_Exchange_Rate_vs_Trade_Imbalance_to_GDP_Ratio_TW"
+    plot_rer_vs_imbalance(filtered_df, annotate=True, output_dir=OUTPUT_DIR, save_name=reer_vs_imbalance_name, fig_suffix="pdf")
+    plot_taiwan_imbalance_time_series(df_filtered, output_dir=OUTPUT_DIR, save_name=taiwan_imbalance_ts_name, show_plot=False, fig_suffix="pdf")
