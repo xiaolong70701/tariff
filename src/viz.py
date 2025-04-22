@@ -485,7 +485,7 @@ def plot_neglog_plgdpo_vs_imb(
     show_plot: bool = False,
     save_name: str = "NegLog_PLGDPO_vs_Imbalance",
     fig_suffix: str = "png",
-    start_year: int = 2009,
+    start_year: int = 1999,
     end_year: int = 2019,
     annotate: bool = True,
     point_alpha: float = 0.7,
