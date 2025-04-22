@@ -4,7 +4,6 @@ from tqdm import tqdm
 from src.analysis import compute_trade_imbalance_ratio, filter_valid_countries
 from src.viz import *
 
-
 def load_small_states(file_path):
     """
     load a list of small states from a text file
@@ -171,6 +170,10 @@ def main():
     
     # generate multi-country comparison charts
     generate_multi_country_charts(df_filtered, countries_list, OUTPUT_DIR, FIG_FORMAT)
+    plot_neglog_plgdpo_vs_imb(
+        df, countries_list, output_dir="./output",
+        save_name="NegLogPLGDPO_vs_Imb_2009_2019", fig_suffix="pdf", point_alpha= 0,
+    )
 
     # create individual country visualizations with progress bar
     successful_charts = 0
