@@ -119,15 +119,29 @@ def _save_or_show_plot(plt, output_dir: Optional[str], save_name: str, fig_suffi
         plt.close()
 
 
-def plot_rer_imb(df: pd.DataFrame, log_scale: bool = True, annotate: bool = True, 
-                show_plot: bool = False, point_alpha: float = 0, text_alpha: float = 0.8, 
-                fontsize: int = 10, save_name: str = "Average Trade Imbalance vs Average Real Exchange Rate by Country (2013-2023)", 
-                fig_suffix: str = "png", output_dir: Optional[str] = None) -> None:
+def plot_rer_imb(
+    df: pd.DataFrame,
+    countries: Optional[List[str]] = None,
+    start_year: int = 1999,
+    end_year: int = 2019,
+    log_scale: bool = True,
+    annotate: bool = True,
+    show_plot: bool = False,
+    point_alpha: float = 0,
+    text_alpha: float = 0.8,
+    fontsize: int = 10,
+    save_name: str = "REER_vs_Trade_Imbalance",
+    fig_suffix: str = "pdf",
+    output_dir: Optional[str] = None
+) -> None:
     """
-    Plot real effective exchange rate vs trade imbalance scatter plot.
+    Plot real effective exchange rate vs trade imbalance scatter plot (country-level means).
     
     Args:
-        df: Dataframe with country macroeconomic data
+        df: Dataframe with macroeconomic data
+        countries: Optional list of countries to include
+        start_year: Start year for averaging
+        end_year: End year for averaging
         log_scale: Whether to use log scale for y-axis
         annotate: Whether to add country code labels
         show_plot: Whether to display the plot
@@ -135,28 +149,50 @@ def plot_rer_imb(df: pd.DataFrame, log_scale: bool = True, annotate: bool = True
         text_alpha: Transparency of text labels
         fontsize: Size of text labels
         save_name: Filename for saving the plot
-        fig_suffix: File extension for saved plot
+        fig_suffix: File extension
         output_dir: Directory to save the plot
     """
-    df["Country Code"] = df["Country Name"].apply(get_alpha_3)
+    plot_df = df[(df["Year"] >= start_year) & (df["Year"] <= end_year)].copy()
+    if plot_df.empty:
+        raise ValueError(f"No data available between {start_year} and {end_year}.")
+
+    # Group by country to get means
+    plot_df = (plot_df.groupby("Country Name")[["Real Effective Exchange Rate", "Trade Imbalance to GDP Ratio"]]
+               .mean()
+               .reset_index())
+
+    # Filter by country list
+    if countries:
+        resolved_codes = {ctry_convert(c) or c for c in countries}
+        plot_df = plot_df[plot_df["Country Name"].isin(resolved_codes)]
+
+    if plot_df.empty:
+        raise ValueError("No data available to plot after filtering.")
+
+    plot_df["Country Code"] = plot_df["Country Name"].apply(get_alpha_3)
+
     plt.figure(figsize=(12, 8))
-    plt.scatter(df["Trade Imbalance to GDP Ratio"], df["Real Effective Exchange Rate"], alpha=point_alpha)
-    
+    plt.scatter(plot_df["Trade Imbalance to GDP Ratio"],
+                plot_df["Real Effective Exchange Rate"],
+                alpha=point_alpha)
+
     if annotate:
-        for _, row in df.iterrows():
-            plt.text(row["Trade Imbalance to GDP Ratio"], row["Real Effective Exchange Rate"], row["Country Code"],
+        for _, row in plot_df.iterrows():
+            plt.text(row["Trade Imbalance to GDP Ratio"],
+                     row["Real Effective Exchange Rate"],
+                     row["Country Code"],
                      fontsize=fontsize, alpha=text_alpha)
 
-    plt.xlabel("Average Trade Imbalance / GDP (2013–2023)")
-    plt.ylabel("Average Real Effective Exchange Rate (2013–2023)")
+    plt.xlabel(f"Trade Imbalance / GDP (mean {start_year}–{end_year})")
+    plt.ylabel(f"Real Effective Exchange Rate (mean {start_year}–{end_year})")
     plt.title("Trade Imbalance vs Real Effective Exchange Rate")
     plt.grid(True)
     plt.tight_layout()
+
     if log_scale:
         plt.yscale("log")
 
     _save_or_show_plot(plt, output_dir, save_name, fig_suffix, show_plot)
-
 
 def _setup_single_country_plot(df: pd.DataFrame, country: str, y_column: str) -> pd.DataFrame:
     """
@@ -477,13 +513,12 @@ def plot_multi_ctry_eff_series(df: pd.DataFrame, countries: List[str], output_di
     
     _save_or_show_plot(plt, output_dir, save_name, fig_suffix, show_plot)
 
-
-def plot_neglog_plgdpo_vs_imb(
+def plot_imbalance_vs_neglog_plgdpo(
     df: pd.DataFrame,
     countries: List[str],
     output_dir: Optional[str] = None,
     show_plot: bool = False,
-    save_name: str = "NegLog_PLGDPO_vs_Imbalance",
+    save_name: str = "Imbalance_vs_NegLog_PLGDPO",
     fig_suffix: str = "png",
     start_year: int = 1999,
     end_year: int = 2019,
@@ -495,26 +530,8 @@ def plot_neglog_plgdpo_vs_imb(
     cmap_name: str = "viridis",
 ) -> None:
     """
-    Scatter plot of −log(pl_gdpo) (x) vs Trade Imbalance/GDP (y).
-
-    Each *country* is represented by **one point**, the mean of the two
-    variables across *start_year* … *end_year* (inclusive).
-    
-    Args:
-        df: Dataframe with country data
-        countries: List of countries to plot
-        output_dir: Directory to save the plot
-        show_plot: Whether to display the plot
-        save_name: Filename for saving the plot
-        fig_suffix: File extension for saved plot
-        start_year: Starting year for calculating means
-        end_year: Ending year for calculating means
-        annotate: Whether to add country code labels
-        point_alpha: Transparency of scatter points
-        text_alpha: Transparency of text labels
-        fontsize: Size of text labels
-        color_scheme: Type of color scheme ('cmap' or other)
-        cmap_name: Name of the colormap to use if color_scheme is 'cmap'
+    Scatter plot of Trade Imbalance/GDP (x) vs −log(pl_gdpo) (y),
+    using country-level means over selected years.
     """
     required = {"Country Name", "Year", "pl_gdpo", "Trade Imbalance to GDP Ratio"}
     lacking = required - set(df.columns)
@@ -547,24 +564,109 @@ def plot_neglog_plgdpo_vs_imb(
         cmap = cm.get_cmap(cmap_name, len(mean_df))
         colors = [cmap(i) for i in range(len(mean_df))]
     else:
-        colors = [None] * len(mean_df)  # Let matplotlib decide default cycle
+        colors = [None] * len(mean_df)
 
     # Draw scatter
     plt.figure(figsize=(10, 7))
-    plt.scatter(mean_df["NegLog_pl_gdpo"],
-                mean_df["Trade Imbalance to GDP Ratio"],
+    plt.scatter(mean_df["Trade Imbalance to GDP Ratio"],
+                mean_df["NegLog_pl_gdpo"],
                 alpha=point_alpha, c=colors, edgecolor="k")
 
     if annotate:
         for idx, row in mean_df.iterrows():
             country_alpha3 = get_alpha_3(resolved_codes[row["Country Name"]])
-            plt.text(row["NegLog_pl_gdpo"], row["Trade Imbalance to GDP Ratio"],
+            plt.text(row["Trade Imbalance to GDP Ratio"], row["NegLog_pl_gdpo"],
                      country_alpha3, fontsize=fontsize, alpha=text_alpha,
                      ha="center", va="center")
 
-    plt.xlabel("−log(pl_gdpo)  (mean {}‑{})".format(start_year, end_year))
-    plt.ylabel("Trade Imbalance / GDP  (mean {}‑{})".format(start_year, end_year))
-    plt.title("−log(pl_gdpo) vs Trade Imbalance / GDP")
+    plt.xlabel("Trade Imbalance / GDP  (mean {}–{})".format(start_year, end_year))
+    plt.ylabel("−log(pl_gdpo)  (mean {}–{})".format(start_year, end_year))
+    plt.title("Trade Imbalance vs −log(pl_gdpo)")
+    plt.grid(True)
+    plt.tight_layout()
+
+    _save_or_show_plot(plt, output_dir, save_name, fig_suffix, show_plot)
+
+def plot_uval_vs_imbalance(
+    df: pd.DataFrame,
+    countries: List[str],
+    output_dir: Optional[str] = None,
+    show_plot: bool = False,
+    save_name: str = "Imbalance_vs_LogUVAL",
+    fig_suffix: str = "png",
+    start_year: int = 1999,
+    end_year: int = 2019,
+    annotate: bool = True,
+    point_alpha: float = 0.7,
+    text_alpha: float = 0.9,
+    fontsize: int = 9,
+    color_scheme: str = "cmap",
+    cmap_name: str = "viridis",
+) -> None:
+    """
+    Scatter plot of Trade Imbalance/GDP (x) vs log(UVAL) (y),
+    using country-level means over selected years.
+    
+    Args:
+        df: DataFrame with required columns including 'log_uval' and 'Trade Imbalance to GDP Ratio'
+        countries: List of country names to include
+        output_dir: Directory to save the figure
+        show_plot: Whether to show the plot
+        save_name: File name for saving
+        fig_suffix: File extension
+        start_year: Start year for averaging
+        end_year: End year for averaging
+        annotate: Add alpha-3 country codes
+        point_alpha: Transparency for scatter points
+        text_alpha: Transparency for text labels
+        fontsize: Font size for text labels
+        color_scheme: Type of color scheme
+        cmap_name: Name of colormap
+    """
+    required = {"Country Name", "Year", "log_uval", "Trade Imbalance to GDP Ratio"}
+    lacking = required - set(df.columns)
+    if lacking:
+        raise KeyError(f"DataFrame missing required columns: {lacking}")
+
+    sub = df[(df["Year"] >= start_year) & (df["Year"] <= end_year)].copy()
+    if sub.empty:
+        raise ValueError("No data in the specified year window.")
+
+    # Compute country-level means
+    mean_df = (sub.groupby("Country Name")[["log_uval", "Trade Imbalance to GDP Ratio"]]
+                  .mean()
+                  .reset_index())
+
+    # Filter by countries
+    resolved_codes = {ctry_convert(c) or c: c for c in countries}
+    mean_df = mean_df[mean_df["Country Name"].isin(resolved_codes.keys())]
+
+    if mean_df.empty:
+        raise ValueError("No matching countries found after processing.")
+
+    # Color scheme
+    if color_scheme == "cmap":
+        cmap = cm.get_cmap(cmap_name, len(mean_df))
+        colors = [cmap(i) for i in range(len(mean_df))]
+    else:
+        colors = [None] * len(mean_df)
+
+    # Draw plot
+    plt.figure(figsize=(10, 7))
+    plt.scatter(mean_df["Trade Imbalance to GDP Ratio"],
+                mean_df["log_uval"],
+                alpha=point_alpha, c=colors, edgecolor="k")
+
+    if annotate:
+        for idx, row in mean_df.iterrows():
+            country_alpha3 = get_alpha_3(resolved_codes[row["Country Name"]])
+            plt.text(row["Trade Imbalance to GDP Ratio"], row["log_uval"],
+                     country_alpha3, fontsize=fontsize, alpha=text_alpha,
+                     ha="center", va="center")
+
+    plt.xlabel("Trade Imbalance / GDP  (mean {}–{})".format(start_year, end_year))
+    plt.ylabel("log(UVAL)  (mean {}–{})".format(start_year, end_year))
+    plt.title("Trade Imbalance vs Undervaluation")
     plt.grid(True)
     plt.tight_layout()
 

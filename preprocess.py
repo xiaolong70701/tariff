@@ -21,14 +21,7 @@ if __name__ == "__main__":
     processor.filter_data_by_cpi()
     processor.process_pwt_data()
     final_df = processor.merge_datasets()
-
-    # format taiwan data to match output structure
-    # taiwan_df["Country Name"] = "TW"
-    # taiwan_df = taiwan_df[["Country Name", "Year", "CPI", "GDP", "Trade Imbalance", "Real Effective Exchange Rate"]]
-
-    # # remove TW from merged dataframe and append custom taiwan data
-    # final_df = final_df[final_df["Country Name"] != "TW"]
-    # final_df = pd.concat([final_df, taiwan_df], ignore_index=True)
+    final_df = processor.add_uval_index(final_df)
 
     # export final dataframe to csv
     os.makedirs(OUTPUT_DIR, exist_ok=True)

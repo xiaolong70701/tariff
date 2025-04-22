@@ -1,7 +1,8 @@
 import pycountry
 import pandas as pd
+import numpy as np
 from fuzzywuzzy import process
-
+import statsmodels.api as sm
 
 class DataProcessor:
     def __init__(self, cpi_df, gdp_df, trade_df, exchange_df, pwt_df):
@@ -209,3 +210,29 @@ class DataProcessor:
         except Exception as e:
             print(f"error formatting {region_code} data: {e}")
             return None
+
+    def add_uval_index(self, df):
+        df = df.copy()
+
+        # Ensure numeric types
+        for col in ["pl_gdpo", "rgdpo", "pop"]:
+            df[col] = pd.to_numeric(df[col], errors="coerce")
+
+        # Filter valid rows: all values > 0 and not missing
+        df = df[(df["pl_gdpo"] > 0) & (df["rgdpo"] > 0) & (df["pop"] > 0)].copy()
+
+        # === Step 1: compute log(RER) and log(GDP per capita) ===
+        df["log_rer"] = -np.log(df["pl_gdpo"])
+        df["log_rgdpo_pc"] = np.log(df["rgdpo"] / df["pop"])
+
+        # === Step 2: fit regression: log(RER) ~ log(GDP per capita) ===
+        X = sm.add_constant(df["log_rgdpo_pc"])
+        y = df["log_rer"]
+        model = sm.OLS(y, X).fit(cov_type="HAC", cov_kwds={"maxlags": 1})
+        print(model.summary())
+
+        # === Step 3: get predicted RER and undervaluation ===
+        df["log_rer_hat"] = model.predict(X)
+        df["log_uval"] = df["log_rer"] - df["log_rer_hat"]
+
+        return df

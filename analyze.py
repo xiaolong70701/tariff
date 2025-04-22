@@ -138,16 +138,6 @@ def main():
 
     # filter out small states
     filtered_df = filter_valid_countries(avg_df, small_states)
-
-    # create global visualization of REER vs Trade Imbalance
-    global_chart_name = "REER_vs_Trade_Imbalance_Global"
-    plot_rer_imb(
-        filtered_df, 
-        annotate=True, 
-        output_dir=OUTPUT_DIR, 
-        save_name=global_chart_name, 
-        fig_suffix=FIG_FORMAT
-    )
     
     # list of countries for individual analysis
     countries_list = [
@@ -170,10 +160,19 @@ def main():
     
     # generate multi-country comparison charts
     generate_multi_country_charts(df_filtered, countries_list, OUTPUT_DIR, FIG_FORMAT)
-    plot_neglog_plgdpo_vs_imb(
-        df, countries_list, output_dir="./output",
-        save_name="NegLogPLGDPO_vs_Imb_2009_2019", fig_suffix="pdf", point_alpha= 0,
+    plot_rer_imb(
+        df=df, countries=countries_list, output_dir=OUTPUT_DIR,
+        save_name="REER_vs_Trade_Imbalance_1999_2019", fig_suffix="pdf", point_alpha= 0,
     )
+    plot_imbalance_vs_neglog_plgdpo(
+        df, countries_list, output_dir="./output",
+        save_name="NegLogPLGDPO_vs_Imb_1999_2019", fig_suffix="pdf", point_alpha= 0,
+    )
+    plot_uval_vs_imbalance(
+        df, countries_list, output_dir="./output",
+        save_name="LogUVAL_vs_Imbalance_1999_2019", fig_suffix="pdf", point_alpha= 0,
+    )
+
 
     # create individual country visualizations with progress bar
     successful_charts = 0
